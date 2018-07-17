@@ -1,0 +1,6 @@
+model_checkpoint_path: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-10000"
+all_model_checkpoint_paths: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-7600"
+all_model_checkpoint_paths: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-7700"
+all_model_checkpoint_paths: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-7800"
+all_model_checkpoint_paths: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-7900"
+all_model_checkpoint_paths: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/tensorboard/model.ckpt-10000"

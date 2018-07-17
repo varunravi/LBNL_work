@@ -1,0 +1,9 @@
+embeddings {
+  tensor_name: "test_embedding:0"
+  metadata_path: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/../labels4.tsv"
+  sprite {
+    image_path: "C:/Users/Andrew/Desktop/LBNL/LASTRO/lensfinder-euclid-master/output_10000_10000_0/../sprite4.png"
+    single_image_dim: 64
+    single_image_dim: 64
+  }
+}
