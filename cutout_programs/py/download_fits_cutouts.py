@@ -24,7 +24,6 @@ Run using: python3 download_fits_cutouts.py
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
-import wget
 import re
 import csv
 import urllib.request
@@ -32,9 +31,47 @@ import argparse
 import sys
 import os
 import time
+import urllib.request
+import shutil
+from pathlib import Path
 
 def fluxToMag(f):
     return (-2.5 * (np.log(f)/np.log(10.) - 9))
+
+
+def download_file(url, file_name):
+    # Download the file from `url` and save it locally under `file_name`:
+    with urllib.request.urlopen(url) as response, open(file_name, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+
+def parse_tractor_dir(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor'):
+    # recursively goes through and files
+    p = Path(dir_path)
+    for dir_name, sub_dirs, files in os.walk(p):
+        print('Found directory: %s' % dir_name)
+        for fname in files:
+            print('\t%s' % fname)
+
+def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250'):
+    # goes through that directory and finds all the paths in the file. Does NOT go through subdirectory
+    p = Path(dir_path)
+    folders = []
+    files = []
+
+    for entry in os.scandir(p):
+        if entry.is_dir():
+            folders.append(entry)
+        elif entry.is_file():
+            files.append(entry)
+
+    print("Folders - {}".format(folders))
+    print("Files - {}".format(files))
+
+def parse_tractor_file(file_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
+    #parses the tractor file
+    p = Path(file_path)
+    if p.is_file:
+        print("File - {}".format(p.name))
 
 def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
 
@@ -251,8 +288,8 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
         oFields = ['filename','brickname','objid','ra','dec','flux_g','flux_r','flux_z','mag_g','mag_r','mag_z','nobs_g','nobs_r','nobs_z', 'mtype']
         writer = csv.DictWriter(oFile, fieldnames=oFields)
         for o in objects:
-            writer.writerow({'filename':o['filename'],'brickname':o['brickname'],'objid':o['objid'],'ra':o['ra'],'dec':o['dec'],'flux_g':o['flux_g'],'flux_r':o['flux_r'],'flux_z':o['flux_z'],'mag_g':o['mag_g'],'mag_r':o['mag_r'],'mag_z':o['mag_z'],'nobs_g':o['nobs_g'],'nobs_r':o['nobs_r'],'nobs_z':o['nobs_z'], 'mtype':o['mtype']})    
-    
+            row = {field:o[field] for field in oFields}
+            writer.writerow(row)
     if folder_done:
         objects = False
 
