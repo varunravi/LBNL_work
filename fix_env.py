@@ -5,5 +5,5 @@ with open('base_env.txt', 'r') as file:
 for line in lines:
 	for i, let in reversed(list(enumerate(line))):
 		if let == '=':
-			print('- {}'.format(line[:i]))
+			print('  - {}'.format(line[:i]))
 			break
