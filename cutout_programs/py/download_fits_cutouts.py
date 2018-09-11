@@ -1,30 +1,23 @@
 '''
 ANDREW PILON
 
-REQUIRES:
-
-    1. if first run of generating new data set: first run "initiate_csv_files.py" with specified file path/names
-
-    2. 
 
 Use this to get data sets from Legacy Surveys.
 
+ - If first run, generates 'cutouts' folder as well as classifications_dr#.csv, objectinfo_dr#.csv, and outfile_dr#.txt within path.
+
 Specifies files from Tractor to download, pulls info on objects, gets fits cutouts from skyviewer using coordinates, writes csv file
-to have the same format as the training classifications.csv, writes objectinfo csvfile containing object info from Tractor. Returns
-object dictionaries and last file opened.
+to have the same format as the training classifications.csv, writes Tractor catalog information to objectinfo_dr#.csv. Appends outfile
+with next run parameters. Returns object dictionaries and parameters for next run.
 
-NOTE: The directories 'tractor_folders', 'tractor_fits' and 'fits_cutouts' must exist in the same folder as this notebook to run.
-
-!!! MORE IMPORTANT NOTE:    I haven't yet figured out the issue of only being able to get certain amounts of cutouts from the viewer
+!!! IMPORTANT NOTE:    I haven't yet figured out the issue of only being able to get certain amounts of cutouts from the viewer
                             before one fails, which causes the rest to fail. For this reason, this program is a workaround that currently
-                            just gets 200 cutouts at a time (max was 247 from terminal, 192 from notebook). Last file opeend is returned so
-                            that it can start from the next one, as well as a counter to not overwrite filenames but keep appending to the
-                            cutout folder.
+                            just gets 200 cutouts at a time (max was 247 from terminal, 192 from notebook). Outfile regulates this to keep
+                            program running.
 
-Run using: python3 download_fits_cutouts.py -f tractor-0003m002.fits -c 4600 -t 000
-                                            *startfile              *counter  *t_folder
+                            -- AJP try using time.sleep() to slow down program, may be overloading server with requests?
 
-                                            OUTDATED^^^: just run with program now (python3 download_fits_cutouts.py). works with outfile
+Run using: python3 download_fits_cutouts.py
 
 '''
 
@@ -43,21 +36,13 @@ import time
 def fluxToMag(f):
     return (-2.5 * (np.log(f)/np.log(10.) - 9))
 
-def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
-    
-    # download folder within tractor catalog from nersc portal, get html of folder webpage
-    DR = 7
-    print('downloading Tractor files from DR{}...'.format(DR))
-    if DR == 7:
-        t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder) # DR7
-        foldername = '/Users/mac/Desktop/LBNL/DR{}/tractor_folders/tractor_{}'.format(DR, t_folder) # DR7
-    elif DR == 6:
-        t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder) # DR6
-        foldername = '/Users/mac/Desktop/LBNL/DR{}/tractor_folders/tractor_{}'.format(DR, t_folder) # DR6
-    print('t_folder:', t_folder, '  type=', type(t_folder))
-    print('t_url = ', t_url)
-    print('foldername = ', foldername)
-    t_folder_file = wget.download(t_url, foldername) #, foldername
+def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
+
+    # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
+    print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
+    t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder)
+    foldername = '{}tractor_{}'.format(path, t_folder)
+    t_folder_file = wget.download(t_url, foldername)
     with open(t_folder_file) as wgetfile:
         wgetdata = wgetfile.read()
     os.remove(foldername)
@@ -66,12 +51,12 @@ def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', m
     prog = re.compile('(?<=\.fits">).{21}')
     result = prog.findall(wgetdata)
     
-    # create dictionaries for each object containing image, ra/dec, flux (mag), nobs (exposures)
+    # create dictionaries for each object containing: image, ra/dec, flux (mag), nobs (exposures), etc.
     objects = [] # list of object dictionaries
     counter = counter_init
     total_fails = 0
     
-    # start where you left off (if specified)
+    # start where you left off (if specified; otherwise set to 0 to start on first file in folder)
     firstfile_idx = 0
     next_start_file = False
     if startfile != False:
@@ -85,12 +70,13 @@ def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', m
     f_idx = firstfile_idx
     for f in result[firstfile_idx:]:
         
-        # open the file, get object info
+        # open the file, get object info, remove file
         print('opening file {}...'.format(f))
         filelink = t_url + f
-        t_file = wget.download(filelink, '/Users/mac/Desktop/LBNL/DR{}/tractor_fits/'.format(DR))
+        t_file = wget.download(filelink, path)
         with fits.open(t_file) as fit:
             filedata = fit[1].data
+        os.remove(t_file)
 
         goodobj = 0
         # update where to begin within the start file, using startobject
@@ -124,8 +110,7 @@ def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', m
                 nobs_r = filedata[i][66]
                 nobs_z = filedata[i][68]
 
-            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and (mtype=='COMP'):
-
+            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes:
                 # now see if we can get it from the viewer cutout
                 if DR == 7:
                     ra = filedata[i][7] #DR7
@@ -149,10 +134,7 @@ def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', m
                     if failed_attempts == 50:
                         failed = True
                     try:
-                        if DR == 7:
-                            filename = wget.download(url, '/Users/mac/Desktop/LBNL/DR{}/fits_cutouts_dr{}_NONLENS_CANDIDATES/cutout_{:06d}.fits'.format(DR, DR, counter)) # DR7
-                        elif DR == 6:
-                            filename = wget.download(url, '/Users/mac/Desktop/LBNL/DR{}/fits_cutouts_dr{}_NONLENS_CANDIDATES/cutout_{:06d}.fits'.format(DR, DR, counter)) # DR6
+                        filename = wget.download(url, '{}cutouts/cutout_{:06d}.fits'.format(path, counter)) # DR7
                         
                         # EXIT IF DOWNLOADING FITS WITH SAME NAME
                         if '(1)' in filename:
@@ -276,59 +258,78 @@ def download_Tractor2(csvfile, objectcsvfile, t_folder='000', n_objects='all', m
 
     return objects, next_start_file, next_start_object, next_c
 
-def main(startfile=False, startobject=False, c=0, t_folder='000'):
+def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits','0','0','001')):
+    '''
+    If first run of program (i.e. not resuming), this creates the necessary files and folders for program to work
+    '''
+    os.makedirs('{}cutouts/'.format(path))
+    csvfile = '{}classifications_dr{}'.format(path, DR)
+    objectfile = '{}objectinfo_dr{}'.format(path, DR)
+    outfile = '{}outfile_dr{}'.format(path, DR)
 
-    csvfilee = '/Users/mac/Desktop/LBNL/DR7/classifications_dr7_NONLENS_CANDIDATES'
-    objectinfoo = '/Users/mac/Desktop/LBNL/DR7/objectinfo_dr7_NONLENS_CANDIDATES'
-    ret_objects, next_start_file, next_start_object, next_c = download_Tractor2(csvfile=csvfilee, objectcsvfile=objectinfoo, t_folder=t_folder, n_objects=200, min_passes=3, counter_init=c, startfile=startfile, startobject=startobject)
+    print('initializing empty classifications csv file...')
+    with open(csvfile+'.csv', 'w') as myFile:  
+        myFields = ["ID","is_lens","Einstein_area","numb_pix_lensed_image","flux_lensed_image_in_sigma"]
+        writer = csv.DictWriter(myFile, fieldnames=myFields)    
+        writer.writeheader()
+    print('done.')
+
+    print('initializing empty object info csv file...')
+    with open(objectfile+'.csv', 'w') as oFile:
+        # omitting 'image' bc it's a lot to put in the csv file and we already have it
+        oFields = ['filename','brickname','objid','ra','dec','flux_g','flux_r','flux_z','mag_g','mag_r','mag_z','nobs_g','nobs_r','nobs_z', 'mtype']
+        writer = csv.DictWriter(oFile, fieldnames=oFields)    
+        writer.writeheader()
+    print('done.')
+
+    print('initializing outfile...')
+    with open(outfile+'.txt', 'w') as outFile:
+        file, objid, c, t_folder = outstart
+        outFile.write('{},{},{},{}'.format(file, objid, c, t_folder))
+    print('done.\n')
+
+    return
+
+def main(path, outfile, csvfile, objectinfo, DR=7, startfile=False, startobject=False, c=0, t_folder='000'):
+
+    ret_objects, next_start_file, next_start_object, next_c = download_Tractor2(path=path, csvfile=csvfile, objectcsvfile=objectinfo, DR=DR, t_folder=t_folder, n_objects=200, min_passes=3, counter_init=c, startfile=startfile, startobject=startobject)
     
     # check if you need to continue getting files from the next folder
     if ret_objects == False:
         new_t_folder = '{:03d}'.format(int(t_folder)+1)
         # call main again, starting with the first object of the first file in the next tractor folder
-        ret_objects, next_start_file, next_start_object, next_c = main(startfile=False, startobject=False, c=next_c, t_folder=new_t_folder)
+        ret_objects, next_start_file, next_start_object, next_c = main(path, outfile, csvfile, objectinfo, DR=7, startfile=False, startobject=False, c=next_c, t_folder=new_t_folder)
 
     print('\ndone.')
     return ret_objects, next_start_file, next_start_object, next_c
 
 if __name__ == "__main__":
 
-
-    # # to input tractor folder, starting file within folder, and counter to update file names.
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-o', type = str)
-    # parser.add_argument('-f', type = str)
-    # parser.add_argument('-c', type = int)
-    # parser.add_argument('-t', type = str)
-    # args = parser.parse_args()
-    # startobject = args.o # object index within file
-    # startfile = args.f # file name of last opened file
-    # c = args.c # counter
-    # t_folder = args.t # tractor folder
-
-    # # # running program with output file, which makes command line arguments unnecessary: # # #
-
-    # get parameters from outfile generated from previous program run
-    
+    # REQUIRED PARAMETERS
+    # -- NOTE: MUST RUN "INITIATE_CSV_FILES.PY" BEFORE FIRST TIME RUNNING THIS
     DR = 7
-    output_filename = '/Users/mac/Desktop/LBNL/DR{}/outfile_dr{}_NONLENS_CANDIDATES.txt'.format(DR, DR)
-    print('\n\nloading in parameters from {}'.format(output_filename))
+    path = '/Users/mac/Desktop/LBNL/cutouts/tester_folder/' # <-- this needs to end in '/'
+
+    # check if first run
+    if not os.path.isdir('{}cutouts'.format(path)):
+        initiate_download_files(path, DR)
+
+    output_filename = '{}outfile_dr{}.txt'.format(path, DR)
+    csvfile = '{}classifications_dr{}'.format(path, DR)
+    objectinfo = '{}objectinfo_dr{}'.format(path, DR)
+
+
+    print('\nloading in parameters from {}'.format(output_filename)) # get the parameters to run the function with from outfile
     with open(output_filename, 'r') as output_file:
         outdata = output_file.readlines()
     startfile, startobject, c, t_folder = str(outdata[-1].split(',')[0]), int(outdata[-1].split(',')[1]), int(outdata[-1].split(',')[2]), str(outdata[-1].split(',')[3])
     # run main
     start_time = time.time()
-    ret_objects, next_start_file, next_start_object, next_c = main(startfile, startobject, c, t_folder)
+    ret_objects, next_start_file, next_start_object, next_c = main(path, output_filename, csvfile, objectinfo, DR, startfile, startobject, c, t_folder)
     # write new parameters to outfile
-    print('\t- - - completed downloads in {} seconds'.format(time.time() - start_time))
-    print('writing parameters for next run to outfile')
+    print('\t- - - completed downloads in {} seconds - - -'.format(time.time() - start_time))
+    print('writing parameters for next run to outfile...')
     with open(output_filename, 'a') as output_file:
         output_file.write('\n{},{},{},{}'.format(next_start_file, next_start_object, next_c, t_folder))
-
-
-
-    # print('\nTractor folder used: {}'.format('tractor_' + t_folder))
-    # print('begin next download with c: {}'.format(c + 200))
-    # print('begin next download with startfile: {}'.format(next_start_file))
-    # print('begin next download with startobject: {}'.format(next_start_object))
+    print('done.\n')
 

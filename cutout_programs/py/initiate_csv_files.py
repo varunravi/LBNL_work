@@ -9,12 +9,12 @@ object information is appended to the end of the files with each call of downloa
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
-import wget
 import re
 import csv
+import os
 import urllib.request
 
-def main(csvfile, objectcsvfile):
+def main(csvfile, objectcsvfile, outfile, outstart):
 	print('initializing empty classifications csv file...')
 	with open(csvfile+'.csv', 'w') as myFile:  
 		myFields = ["ID","is_lens","Einstein_area","numb_pix_lensed_image","flux_lensed_image_in_sigma"]
@@ -30,5 +30,20 @@ def main(csvfile, objectcsvfile):
 		writer.writeheader()
 	print('done.')
 
+	print('initializing outfile...')
+	with open(outfile+'.txt', 'w') as outFile:
+		file, objid, c, t_folder = outstart
+		outFile.write('{},{},{},{}'.format(file, objid, c, t_folder))
+	print('done.')
+
 if __name__ == '__main__':
-	main('/Users/mac/Desktop/LBNL/DR7/classifications_dr7_NONLENS_CANDIDATES', '/Users/mac/Desktop/LBNL/DR7/objectinfo_dr7_NONLENS_CANDIDATES')
+
+	outstart = ('tractor-0010p292.fits','0','0','001') # file, objid, c, t_folder --  for outfile
+
+	DR = int(input('DR: '))
+	path = str(input('path: '))
+	os.makedirs('{}cutouts/'.format(path))
+	csvfile = '{}classifications_dr{}'.format(path, DR)
+	objectfile = '{}objectinfo_dr{}'.format(path, DR)
+	outfile = '{}outfile_dr{}'.format(path, DR)
+	main(csvfile, objectfile, outfile, outstart)
