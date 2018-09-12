@@ -33,6 +33,7 @@ import os
 import time
 import urllib.request
 import shutil
+from numbers import Number
 from pathlib import Path
 
 def fluxToMag(f):
@@ -67,14 +68,86 @@ def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacy
     print("Folders - {}".format(folders))
     print("Files - {}".format(files))
 
-def parse_tractor_file(file_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
+def valid_passes(cutout_values, min_passes):
+    check_values = ['nobs_g', 'nobs_r', 'nobz_z']
+    for check_value in check_values:
+        if not _valid_pass(cutout_values, min_passes, check_value):
+            return False
+    return True
+
+def _valid_pass(cutout_values, min_passes, key):
+    return cutout_values['nobs_g'].isinstance(n, Number) and cutout_values['nobs_g'] >= min_passes:
+
+def parse_tractor_file(file_path='/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
+    #TODO: put these into the constructor
+    DR = 7
+    n_objects = 'all'
+    min_passes = 3
+    counter_init = 0
+    startfile = False
+    startobject = False
+    cutout_list = []
     #parses the tractor file
     p = Path(file_path)
-    if p.is_file:
+    if p.is_file and p.suffix == 'fits':
         print("File - {}".format(p.name))
+        # update where to begin within the start file, using startobject
+        if startobject == False:
+            startobject = 0
 
-def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
+        # go through objects in file
+        for i in range(startobject, filedata.shape[0]):
 
+            same_file = False
+            
+            # check if enough objects have already been added to the list
+            if len(objects) == n_objects:
+                #TODO: what is this?
+                last_object = i # this IS the next object to get because it won't be read in this iteration (break)
+                if last_object == (filedata.shape[0] - 1): # check if it happened to be the alst object in the file so that
+                    last_object = 0                            # the next file can start on objid: 0
+                break
+            
+            cutout_values = {}
+
+            # obtain values of nobs_g, nobs_r, nobs_z and mtype
+            if DR == 7:
+                cutout_values['nobs_g'] = filedata[i][104] # DR7
+                cutout_values['nobs_r'] = filedata[i][105]
+                cutout_values['nobs_z'] = filedata[i][107]
+                cutout_values['mtype'] = filedata[i][6]
+                if valid_passes(cutout_values):
+                    cutout_values['ra'] = filedata[i][7]
+                    cutout_values['dec'] = filedata[i][8]
+                    cutout_values['objid'] = filedata[i][3]
+                else: 
+                    continue
+            elif DR == 6:
+                cutout_values['nobs_g'] = filedata[i][65] # DR6
+                cutout_values['nobs_r'] = filedata[i][66]
+                cutout_values['nobs_z'] = filedata[i][68]
+                if valid_passes(cutout_values):
+                    cutout_values['ra'] = filedata[i][6]
+                    cutout_values['dec'] = filedata[i][7]
+                    cutout_values['objid'] = filedata[i][3]
+                else:
+                    continue
+            else:
+                continue
+            
+            cutout_list.append(cutout_values)
+
+    # todo: parse through set of cutouts
+    # create url for cutout
+    for cutout in cutout_list:
+        url = ''
+        print('\t [{}] attempting to get cutout for object {} at {} {}'.format(goodobj,objid,ra,dec))
+        if DR == 7:
+            url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(ra, dec) # DR5 -> DR7
+        elif DR == 6:
+            url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=mzls+bass-dr6&pixscale=0.262&bands=grz'.format(ra, dec) # DR6
+
+def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=3, counter_init=0, startfile=False, startobject=False):
     # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
     print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
     t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder)
