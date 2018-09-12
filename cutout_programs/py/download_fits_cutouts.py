@@ -39,11 +39,11 @@ from pathlib import Path
 def fluxToMag(f):
     return (-2.5 * (np.log(f)/np.log(10.) - 9))
 
-
 def download_file(url, file_name):
     # Download the file from `url` and save it locally under `file_name`:
     with urllib.request.urlopen(url) as response, open(file_name, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
+
 
 def parse_tractor_dir(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor'):
     # recursively goes through and files
@@ -52,6 +52,8 @@ def parse_tractor_dir(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurve
         print('Found directory: %s' % dir_name)
         for fname in files:
             print('\t%s' % fname)
+    #TODO: hook up to parse_tractor_file
+
 
 def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250'):
     # goes through that directory and finds all the paths in the file. Does NOT go through subdirectory
@@ -64,32 +66,37 @@ def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacy
             folders.append(entry)
         elif entry.is_file():
             files.append(entry)
+    #TODO: hook up to parse_tractor_file
 
     print("Folders - {}".format(folders))
     print("Files - {}".format(files))
 
-def valid_passes(cutout_values, min_passes):
+# checks if the dictionary cutout_values has values nobs_g, nobs_r and nobs_z greater then or equal to min_passes
+def has_valid_nobs_values(cutout_values, min_passes):
     check_values = ['nobs_g', 'nobs_r', 'nobz_z']
     for check_value in check_values:
         if not _valid_pass(cutout_values, min_passes, check_value):
             return False
     return True
 
+# checks if the dictionary cutout_values's key is a number and has a value greater then or equal to min_passes
 def _valid_pass(cutout_values, min_passes, key):
     return cutout_values['nobs_g'].isinstance(n, Number) and cutout_values['nobs_g'] >= min_passes:
 
-# returns a list of the valid cutouts from the tractor file in the form of a dictionary containing nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid
+# intakes a .fits file and returns a list of the valid cutouts from the tractor file in the form of a dictionary containing nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid
 def parse_tractor_file(file_path='/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
     #TODO: put these into the constructor
     DR = 7
     n_objects = 'all'
     min_passes = 3
-    counter_init = 0
+
+    #TODO: what are these for?
     startfile = False
     startobject = False
+
     cutout_list = []
-    #parses the tractor file
     p = Path(file_path)
+    # check if file is a fits file
     if p.is_file and p.suffix == 'fits':
         print("File - {}".format(p.name))
         # update where to begin within the start file, using startobject
@@ -111,33 +118,30 @@ def parse_tractor_file(file_path='/global/cscratch1/sd/mdomingo/data/legacysurve
             
             cutout_values = {}
 
-            # obtain values of nobs_g, nobs_r, nobs_z and mtype
+            # obtain values of nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid values
             if DR == 7:
                 cutout_values['dr'] = 7
                 cutout_values['nobs_g'] = filedata[i][104] # DR7
                 cutout_values['nobs_r'] = filedata[i][105]
                 cutout_values['nobs_z'] = filedata[i][107]
+                cutout_values['ra'] = filedata[i][7]
+                cutout_values['dec'] = filedata[i][8]
+                cutout_values['objid'] = filedata[i][3]
                 cutout_values['mtype'] = filedata[i][6]
-                if valid_passes(cutout_values):
-                    cutout_values['ra'] = filedata[i][7]
-                    cutout_values['dec'] = filedata[i][8]
-                    cutout_values['objid'] = filedata[i][3]
-                else: 
-                    continue
             elif DR == 6:
                 cutout_values['dr'] = 6
                 cutout_values['nobs_g'] = filedata[i][65] # DR6
                 cutout_values['nobs_r'] = filedata[i][66]
                 cutout_values['nobs_z'] = filedata[i][68]
-                if valid_passes(cutout_values):
-                    cutout_values['ra'] = filedata[i][6]
-                    cutout_values['dec'] = filedata[i][7]
-                    cutout_values['objid'] = filedata[i][3]
-                else:
-                    continue
+                cutout_values['ra'] = filedata[i][6]
+                cutout_values['dec'] = filedata[i][7]
+                cutout_values['objid'] = filedata[i][3]
+                # does not have an mtype
             else:
                 continue
-            cutout_list.append(cutout_values)
+            # check if the nobs values are valid, if so add that to the cutout list
+            if has_valid_nobs_values(cutout_values, min_passes):
+                cutout_list.append(cutout_values)
     return cutout_list
 
 # takes in a list of cutouts and creates tries to download the ra and dec values
