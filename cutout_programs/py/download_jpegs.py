@@ -27,7 +27,7 @@ def get_jpegs(csvfile, outfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=2
     #     c = jpeg_start
     
     # get cutout ids for 200 images
-    c=4800
+    c=jpeg_start
     with open(csvfile) as csvdata:
         objectinfo = [line.split(',') for line in csvdata]
     for info in objectinfo[c+1:c+step+1]:
@@ -39,8 +39,11 @@ def get_jpegs(csvfile, outfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=2
     return    
 
 def main():
-    step = 4163
-    get_jpegs('/Users/mac/Desktop/LBNL/DR7/objectinfo_dr7_NONLENS_CANDIDATES.csv', '/Users/mac/Desktop/LBNL/DR7/jpeg_outfile.txt', '/Users/mac/Desktop/LBNL/DR7/jpegs_dr7_NONLENS_CANDIDATES/', 7, 4163, 4800, step)
+    step = 10000 # number of fits to get jpegs for
+    fits_sv_file = '/Users/mac/Desktop/LBNL/DR7/objectinfo_dr7_NONLENS_CANDIDATES.csv'
+    jpeg_outfile = '/Users/mac/Desktop/LBNL/DR7/jpeg_outfile.txt' # this can be ignored
+    jpeg_folder = '/Users/mac/Desktop/LBNL/DR7/jpegs_dr7_NONLENS_CANDIDATES/'
+    get_jpegs(fits_csv_file, jpeg_outfile, jpeg_folder, 7, step, 0, step)
     # step = 20000
     # get_jpegs('/Users/mac/Desktop/LBNL/DR6/objectinfo_dr6.csv', '/Users/mac/Desktop/LBNL/DR6/jpeg_outfile.txt', '/Users/mac/Desktop/LBNL/DR6/jpegs_dr6/', 6, 10000, 0, step)
     print('got {} images.'.format(step))

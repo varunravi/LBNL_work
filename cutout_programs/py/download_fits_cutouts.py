@@ -36,7 +36,7 @@ import time
 def fluxToMag(f):
     return (-2.5 * (np.log(f)/np.log(10.) - 9))
 
-def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
+def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=3, counter_init=0, startfile=False, startobject=False):
 
     # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
     print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
@@ -110,7 +110,8 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 nobs_r = filedata[i][66]
                 nobs_z = filedata[i][68]
 
-            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes:
+            #### DATA CUT SECTION
+            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and mtype=='COMP':
                 # now see if we can get it from the viewer cutout
                 if DR == 7:
                     ra = filedata[i][7] #DR7
