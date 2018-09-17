@@ -81,7 +81,7 @@ def has_valid_nobs_values(cutout_values, min_passes):
 
 # checks if the dictionary cutout_values's key is a number and has a value greater then or equal to min_passes
 def _valid_pass(cutout_values, min_passes, key):
-    return cutout_values['nobs_g'].isinstance(n, Number) and cutout_values['nobs_g'] >= min_passes:
+    return cutout_values['nobs_g'].isinstance(n, Number) and cutout_values['nobs_g'] >= min_passes
 
 # intakes a .fits file and returns a list of the valid cutouts from the tractor file in the form of a dictionary containing nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid
 def parse_tractor_file(file_path='/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
