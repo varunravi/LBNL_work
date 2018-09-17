@@ -33,6 +33,7 @@ import os
 import time
 import urllib.request
 import shutil
+from numbers import Number
 from pathlib import Path
 
 def fluxToMag(f):
@@ -43,6 +44,7 @@ def download_file(url, file_name):
     with urllib.request.urlopen(url) as response, open(file_name, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
 
+
 def parse_tractor_dir(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor'):
     # recursively goes through and files
     p = Path(dir_path)
@@ -50,6 +52,8 @@ def parse_tractor_dir(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurve
         print('Found directory: %s' % dir_name)
         for fname in files:
             print('\t%s' % fname)
+    #TODO: hook up to parse_tractor_file
+
 
 def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250'):
     # goes through that directory and finds all the paths in the file. Does NOT go through subdirectory
@@ -62,17 +66,173 @@ def parse_tractor_dir_flat(dir_path = '/global/cscratch1/sd/mdomingo/data/legacy
             folders.append(entry)
         elif entry.is_file():
             files.append(entry)
+    #TODO: hook up to parse_tractor_file
 
     print("Folders - {}".format(folders))
     print("Files - {}".format(files))
 
-def parse_tractor_file(file_path = '/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
-    #parses the tractor file
-    p = Path(file_path)
-    if p.is_file:
-        print("File - {}".format(p.name))
+# checks if the dictionary cutout_values has values nobs_g, nobs_r and nobs_z greater then or equal to min_passes
+def has_valid_nobs_values(cutout_values, min_passes):
+    check_values = ['nobs_g', 'nobs_r', 'nobz_z']
+    for check_value in check_values:
+        if not _valid_pass(cutout_values, min_passes, check_value):
+            return False
+    return True
 
+# checks if the dictionary cutout_values's key is a number and has a value greater then or equal to min_passes
+def _valid_pass(cutout_values, min_passes, key):
+    return cutout_values['nobs_g'].isinstance(n, Number) and cutout_values['nobs_g'] >= min_passes:
+
+# intakes a .fits file and returns a list of the valid cutouts from the tractor file in the form of a dictionary containing nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid
+def parse_tractor_file(file_path='/global/cscratch1/sd/mdomingo/data/legacysurvey/dr7/tractor/250/tractor-2501p320.fits'):
+    #TODO: put these into the constructor
+    DR = 7
+    n_objects = 'all'
+    min_passes = 3
+
+    #TODO: what are these for?
+    startfile = False
+    startobject = False
+
+    cutout_list = []
+    p = Path(file_path)
+    # check if file is a fits file
+    if p.is_file and p.suffix == 'fits':
+        print("File - {}".format(p.name))
+        # update where to begin within the start file, using startobject
+        if startobject == False:
+            startobject = 0
+
+        # go through objects in file
+        for i in range(startobject, filedata.shape[0]):
+
+<<<<<<< HEAD
 def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
+=======
+            same_file = False
+            
+            # check if enough objects have already been added to the list
+            if len(objects) == n_objects:
+                #TODO: what is this?
+                last_object = i # this IS the next object to get because it won't be read in this iteration (break)
+                if last_object == (filedata.shape[0] - 1): # check if it happened to be the alst object in the file so that
+                    last_object = 0                            # the next file can start on objid: 0
+                break
+            
+            cutout_values = {}
+
+            # obtain values of nobs_g, nobs_r, nobs_z, mtype, ra, dec and objid values
+            if DR == 7:
+                cutout_values['dr'] = 7
+                cutout_values['nobs_g'] = filedata[i][104] # DR7
+                cutout_values['nobs_r'] = filedata[i][105]
+                cutout_values['nobs_z'] = filedata[i][107]
+                cutout_values['ra'] = filedata[i][7]
+                cutout_values['dec'] = filedata[i][8]
+                cutout_values['objid'] = filedata[i][3]
+                cutout_values['mtype'] = filedata[i][6]
+            elif DR == 6:
+                cutout_values['dr'] = 6
+                cutout_values['nobs_g'] = filedata[i][65] # DR6
+                cutout_values['nobs_r'] = filedata[i][66]
+                cutout_values['nobs_z'] = filedata[i][68]
+                cutout_values['ra'] = filedata[i][6]
+                cutout_values['dec'] = filedata[i][7]
+                cutout_values['objid'] = filedata[i][3]
+                # does not have an mtype
+            else:
+                continue
+            # check if the nobs values are valid, if so add that to the cutout list
+            if has_valid_nobs_values(cutout_values, min_passes):
+                cutout_list.append(cutout_values)
+    return cutout_list
+
+# takes in a list of cutouts and creates tries to download the ra and dec values
+def download_cutouts(cutout_list):
+    necessary_values = ['nobs_g', 'nobs_r', 'nobz_z', 'ra', 'dec', 'objid', 'dr']
+    # todo: parse through set of cutouts
+    # create url for cutout
+    for count, cutout in enumerate(cutout_list):
+        for necessary_value in necessary_values:
+            if necessary_value not in cutout:
+                print('Warning: A cutout #{} does not contain the necessary value {}. Skipping that cutout'.format(count, necessary_value))
+                continue
+        
+        objid = cutout['objid']
+        ra = cutout['ra']
+        dec = cutout['dec']
+
+        url = ''
+        print('\t [{}] attempting to get cutout for object {} at {} {}'.format(count, objid, ra,dec))
+        if DR == 7:
+            url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(ra, dec) # DR5 -> DR7
+        elif DR == 6:
+            url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=mzls+bass-dr6&pixscale=0.262&bands=grz'.format(ra, dec) # DR6
+
+        # TODO: uncomment these and figure out what to keep
+        # while failed == False and retrieved == False:
+        #     # checks how many attempts have been made, moves onto next object if too many
+        #     if failed_attempts == 50:
+        #         failed = True
+        #     try:
+        #         filename = wget.download(url, '{}cutouts/cutout_{:06d}.fits'.format(path, counter)) # DR7
+                
+        #         # EXIT IF DOWNLOADING FITS WITH SAME NAME
+        #         if '(1)' in filename:
+        #             same_file = True
+        #             print(filename)
+        #             print('\nthat file already exist, go figure out what you messed up. saving parameters and exiting program...')
+        #             break
+
+        #         with fits.open(filename) as fit:
+        #             image = fit[0].data
+        #         retrieved = True
+        #     except:
+        #         failed_attempts += 1
+        #         if failed_attempts % 10 == 0:
+        #             print('\t\tfailed attempt {}'.format(failed_attempts))
+        #         pass
+
+        # if failed:
+        #     # don't update object list or counter
+        #     total_fails += 1
+        #     print('\t\tfailed to retrieve cutout for object - moving on to next object...')
+        
+        # if retrieved:
+        #     # get all remaining values needed for dictionary, update object list and counter
+        #     if DR == 7:
+        #         filename = 'cutout_{:06d}'.format(counter)
+        #         brickname = filedata[i][2]
+        #         flux_g = filedata[i][44] # DR7
+        #         mag_g = 0
+        #         if flux_g != 0:
+        #             mag_g = fluxToMag(flux_g)
+        #         flux_r = filedata[i][45] # DR7
+        #         mag_r = 0
+        #         if flux_r != 0:
+        #             mag_r = fluxToMag(flux_r)
+        #         flux_z = filedata[i][47] # DR7
+        #         mag_z = 0
+        #         if flux_z != 0:
+        #             mag_z = fluxToMag(flux_z)
+        #     elif DR == 6:
+        #         filename = 'cutout_{:06d}'.format(counter)
+        #         brickname = filedata[i][2]
+        #         flux_g = filedata[i][17] # DR6
+        #         mag_g = 0
+        #         if flux_g != 0:
+        #             mag_g = fluxToMag(flux_g)
+        #         flux_r = filedata[i][18] # DR6
+        #         mag_r = 0
+        #         if flux_r != 0:
+        #             mag_r = fluxToMag(flux_r)
+        #         flux_z = filedata[i][20] # DR6
+        #         mag_z = 0
+        #         if flux_z != 0:
+        #             mag_z = fluxToMag(flux_z)
+
+def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=3, counter_init=0, startfile=False, startobject=False):
+>>>>>>> f33af0c4c7eeb50dc53c68555f0e1e225db060f5
     # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
     print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
     t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder)
