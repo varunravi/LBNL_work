@@ -38,7 +38,6 @@ from pathlib import Path
 def fluxToMag(f):
     return (-2.5 * (np.log(f)/np.log(10.) - 9))
 
-
 def download_file(url, file_name):
     # Download the file from `url` and save it locally under `file_name`:
     with urllib.request.urlopen(url) as response, open(file_name, 'wb') as out_file:
@@ -74,7 +73,6 @@ def parse_tractor_file(file_path = '/global/cscratch1/sd/mdomingo/data/legacysur
         print("File - {}".format(p.name))
 
 def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=2, counter_init=0, startfile=False, startobject=False):
-
     # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
     print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
     t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(DR, t_folder)
@@ -158,6 +156,7 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                     dec = filedata[i][7]
                     objid = filedata[i][3]
                 print('\t [{}] attempting to get cutout for object {} at {} {}'.format(goodobj,objid,ra,dec))
+                # creating url for good cut
                 if DR == 7:
                     url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(ra, dec) # DR5 -> DR7
                 elif DR == 6:
