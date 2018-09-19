@@ -46,7 +46,6 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
     with open(t_folder_file) as wgetfile:
         wgetdata = wgetfile.read()
     os.remove(foldername)
-
     # search html code for filenames 
     prog = re.compile('(?<=\.fits">).{21}')
     result = prog.findall(wgetdata)
@@ -76,7 +75,6 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
         t_file = wget.download(filelink, path)
         with fits.open(t_file) as fit:
             filedata = fit[1].data
-        os.remove(t_file)
 
         goodobj = 0
         # update where to begin within the start file, using startobject
@@ -256,11 +254,10 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
         oFields = ['filename','brickname','objid','ra','dec','flux_g','flux_r','flux_z','mag_g','mag_r','mag_z','nobs_g','nobs_r','nobs_z', 'mtype']
         writer = csv.DictWriter(oFile, fieldnames=oFields)
         for o in objects:
-            writer.writerow({'filename':o['filename'],'brickname':o['brickname'],'objid':o['objid'],'ra':o['ra'],'dec':o['dec'],'flux_g':o['flux_g'],'flux_r':o['flux_r'],'flux_z':o['flux_z'],'mag_g':o['mag_g'],'mag_r':o['mag_r'],'mag_z':o['mag_z'],'nobs_g':o['nobs_g'],'nobs_r':o['nobs_r'],'nobs_z':o['nobs_z'], 'mtype':o['mtype']})    
-    
+            writer.writerow({'filename':o['filename'],'brickname':o['brickname'],'objid':o['objid'],'ra':o['ra'],'dec':o['dec'],'flux_g':o['flux_g'],'flux_r':o['flux_r'],'flux_z':o['flux_z'],'mag_g':o['mag_g'],'mag_r':o['mag_r'],'mag_z':o['mag_z'],'nobs_g':o['nobs_g'],'nobs_r':o['nobs_r'],'nobs_z':o['nobs_z'], 'mtype':o['mtype']})
+
     if folder_done:
         objects = False
-
     return objects, next_start_file, next_start_object, next_c
 
 def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits','0','0','001')):
@@ -296,7 +293,7 @@ def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits','0','0',
     return
 
 def main(path, outfile, csvfile, objectinfo, DR=7, startfile=False, startobject=False, c=0, t_folder='000'):
-
+    t_folder = '010'
     ret_objects, next_start_file, next_start_object, next_c = download_Tractor2(path=path, csvfile=csvfile, objectcsvfile=objectinfo, DR=DR, t_folder=t_folder, n_objects=200, min_passes=3, counter_init=c, startfile=startfile, startobject=startobject)
     
     # check if you need to continue getting files from the next folder

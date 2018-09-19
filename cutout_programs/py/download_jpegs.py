@@ -31,6 +31,9 @@ def get_jpegs(csvfile, outfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=2
     with open(csvfile) as csvdata:
         objectinfo = [line.split(',') for line in csvdata]
     for info in objectinfo[c+1:c+step+1]:
+        if len(info) < 5:
+            print('skipping jpeg for ' + info[0])
+            continueju
         print('getting jpeg for', info[0])
         jpeg_link = 'http://legacysurvey.org/viewer/jpeg-cutout?ra={}&dec={}&layer={}&pixscale=0.262&bands=grz&size=101'.format(info[3], info[4], layer)
         jpeg_file = jpeg_folder+info[0]+'.jpeg'
@@ -40,9 +43,9 @@ def get_jpegs(csvfile, outfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=2
 
 def main():
     step = 10000 # number of fits to get jpegs for
-    fits_sv_file = '/Users/mac/Desktop/LBNL/DR7/objectinfo_dr7_NONLENS_CANDIDATES.csv'
-    jpeg_outfile = '/Users/mac/Desktop/LBNL/DR7/jpeg_outfile.txt' # this can be ignored
-    jpeg_folder = '/Users/mac/Desktop/LBNL/DR7/jpegs_dr7_NONLENS_CANDIDATES/'
+    fits_csv_file = 'C:/Users/mcdom/Documents/usf/lbnl/data/dr7/objectinfo_dr7.csv'
+    jpeg_outfile = 'C:/Users/mcdom/Documents/usf/lbnl/data/dr7/jpeg_outfile.txt' # this can be ignored
+    jpeg_folder = 'C:/Users/mcdom/Documents/usf/lbnl/data/dr7/jpegs_dr7_NONLENS_CANDIDATES/'
     get_jpegs(fits_csv_file, jpeg_outfile, jpeg_folder, 7, step, 0, step)
     # step = 20000
     # get_jpegs('/Users/mac/Desktop/LBNL/DR6/objectinfo_dr6.csv', '/Users/mac/Desktop/LBNL/DR6/jpeg_outfile.txt', '/Users/mac/Desktop/LBNL/DR6/jpegs_dr6/', 6, 10000, 0, step)
