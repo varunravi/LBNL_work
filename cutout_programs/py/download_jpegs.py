@@ -31,9 +31,6 @@ def get_jpegs(csvfile, outfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=2
     with open(csvfile) as csvdata:
         objectinfo = [line.split(',') for line in csvdata]
     for info in objectinfo[c+1:c+step+1]:
-        if len(info) < 5:
-            print('skipping jpeg for ' + info[0])
-            continueju
         print('getting jpeg for', info[0])
         jpeg_link = 'http://legacysurvey.org/viewer/jpeg-cutout?ra={}&dec={}&layer={}&pixscale=0.262&bands=grz&size=101'.format(info[3], info[4], layer)
         jpeg_file = jpeg_folder+info[0]+'.jpeg'
