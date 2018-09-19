@@ -111,7 +111,7 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 nobs_z = filedata[i][68]
 
             #### DATA CUT SECTION
-            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and mtype=='COMP':
+            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and (mtype=='COMP' or mtype=='DEV' or mtype=='EXP'):
                 # now see if we can get it from the viewer cutout
                 if DR == 7:
                     ra = filedata[i][7] #DR7
@@ -175,6 +175,10 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                         mag_z = 0
                         if flux_z != 0:
                             mag_z = fluxToMag(flux_z)
+                            # if mag_z < -0.046518:
+                            #     continue
+                            # if mag_z > 7.807234:
+                            #     continue
                     elif DR == 6:
                         filename = 'cutout_{:06d}'.format(counter)
                         brickname = filedata[i][2]
@@ -309,7 +313,7 @@ if __name__ == "__main__":
     # REQUIRED PARAMETERS
     # -- NOTE: MUST RUN "INITIATE_CSV_FILES.PY" BEFORE FIRST TIME RUNNING THIS
     DR = 7
-    path = '/Users/mac/Desktop/LBNL/cutouts/tester_folder/' # <-- this needs to end in '/'
+    path = 'C:/Users/mcdom/Documents/usf/lbnl/data/dr7/' # <-- this needs to end in '/'
 
     # check if first run
     if not os.path.isdir('{}cutouts'.format(path)):
