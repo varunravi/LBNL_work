@@ -36,12 +36,22 @@ import time
 
 
 def fluxToMag(f):
-    return (-2.5 * (np.log(f)/np.log(10.) - 9))
+    return (-2.5 * (np.log(f) / np.log(10.) - 9))
 
 
-def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_objects='all', min_passes=3, counter_init=0, startfile=False, startobject=False):
+def download_Tractor2(path,
+                      csvfile,
+                      objectcsvfile,
+                      DR=7,
+                      t_folder='000',
+                      n_objects='all',
+                      min_passes=3,
+                      counter_init=0,
+                      startfile=False,
+                      startobject=False):
     # download folder within tractor catalog from nersc portal, get html of folder webpage, remove file
-    print('downloading Tractor files from DR{} Tractor folder {}...'.format(DR, t_folder))
+    print('downloading Tractor files from DR{} Tractor folder {}...'.format(
+        DR, t_folder))
     t_url = 'http://portal.nersc.gov/project/cosmo/data/legacysurvey/dr{}/tractor/{}/'.format(
         DR, t_folder)
     foldername = '{}tractor_{}'.format(path, t_folder)
@@ -93,12 +103,13 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 last_object = i
                 # check if it happened to be the alst object in the file so that
                 if last_object == (filedata.shape[0] - 1):
-                    last_object = 0                            # the next file can start on objid: 0
+                    last_object = 0  # the next file can start on objid: 0
                 break
             #  break out of loop and go to next file if it gets stalled after a failure and can't continue to get fits
             if total_fails == 15:
                 print(
-                    '!!! failed to get cutout 15 times - quitting early with recovered objects !!!')
+                    '!!! failed to get cutout 15 times - quitting early with recovered objects !!!'
+                )
                 break
 
             filename = 'cutout_{:06d}'.format(counter)
@@ -159,8 +170,8 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 continue
             if mtype != 'COMP' or mtype != 'DEV' or mtype != 'EXP':
                 continue
-            print('\t [{}] attempting to get cutout for object {} at {} {}'.format(
-                goodobj, objid, ra, dec))
+            print('\t [{}] attempting to get cutout for object {} at {} {}'.
+                  format(goodobj, objid, ra, dec))
 
             failed_attempts = 0
             failed = False
@@ -171,14 +182,16 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                     failed = True
                 try:
                     filename = wget.download(
-                        url, '{}cutouts/cutout_{:06d}.fits'.format(path, counter))
+                        url, '{}cutouts/cutout_{:06d}.fits'.format(
+                            path, counter))
 
                     # EXIT IF DOWNLOADING FITS WITH SAME NAME
                     if '(1)' in filename:
                         same_file = True
                         print(filename)
                         print(
-                            '\nthat file already exist, go figure out what you messed up. saving parameters and exiting program...')
+                            '\nthat file already exist, go figure out what you messed up. saving parameters and exiting program...'
+                        )
                         return
                     with fits.open(filename) as fit:
                         image = fit[0].data
@@ -193,9 +206,27 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 # don't update object list or counter
                 total_fails += 1
                 print(
-                    '\t\tfailed to retrieve cutout for object - moving on to next object...')
+                    '\t\tfailed to retrieve cutout for object - moving on to next object...'
+                )
                 continue
-            object_dict = {'image': image, 'brickname': brickname, 'objid': objid, 'filename': filename, 'ra': ra, 'dec': dec, 'flux_g': flux_g, 'flux_r': flux_r, 'flux_z': flux_z, 'mag_g': mag_g, 'mag_r': mag_r, 'mag_z': mag_z, 'nobs_g': nobs_g, 'nobs_r': nobs_r, 'nobs_z': nobs_z, 'mtype': mtype}
+            object_dict = {
+                'image': image,
+                'brickname': brickname,
+                'objid': objid,
+                'filename': filename,
+                'ra': ra,
+                'dec': dec,
+                'flux_g': flux_g,
+                'flux_r': flux_r,
+                'flux_z': flux_z,
+                'mag_g': mag_g,
+                'mag_r': mag_r,
+                'mag_z': mag_z,
+                'nobs_g': nobs_g,
+                'nobs_r': nobs_r,
+                'nobs_z': nobs_z,
+                'mtype': mtype,
+            }
             objects.append(object_dict)
             counter += 1
             goodobj += 1
@@ -212,7 +243,8 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
             break
         # check if file is finished but need to move onto next file. Then reset objid to 0 again
         if (i == filedata.shape[0] - 1) and (len(objects) < n_objects):
-            print('not enough objects from {}  ---  moving on to next file...'.format(f))
+            print('not enough objects from {}  ---  moving on to next file...'.
+                  format(f))
             startobject = 0
             next_start_object = 0
             next_c = counter
@@ -237,35 +269,63 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
 
     # now create csv file to match fits file images, imitating the lensfinder challenge format
     print('appending files to classification csv file...')
-    with open(csvfile+'.csv', 'a') as myFile:
-        myFields = ["ID", "is_lens", "Einstein_area",
-                    "numb_pix_lensed_image", "flux_lensed_image_in_sigma"]
+    with open(csvfile + '.csv', 'a') as myFile:
+        myFields = [
+            "ID", "is_lens", "Einstein_area", "numb_pix_lensed_image",
+            "flux_lensed_image_in_sigma"
+        ]
         writer = csv.DictWriter(myFile, fieldnames=myFields)
         counter = counter_init
         for i in range(len(objects)):
             # might want to change the ID for the training process if it makes it easier to iterate
             ID = '{:06d}'.format(counter)
             counter += 1
-            writer.writerow({"ID": ID, "is_lens": 0, "Einstein_area": 'nan',
-                             "numb_pix_lensed_image": 'nan', "flux_lensed_image_in_sigma": 'nan'})
+            writer.writerow({
+                "ID": ID,
+                "is_lens": 0,
+                "Einstein_area": 'nan',
+                "numb_pix_lensed_image": 'nan',
+                "flux_lensed_image_in_sigma": 'nan'
+            })
 
     # write csv file to contain information from object dictionaries
     print('appending files to object info csv file...')
-    with open(objectcsvfile+'.csv', 'a') as oFile:
+    with open(objectcsvfile + '.csv', 'a') as oFile:
         # omitting 'image' bc it's a lot to put in the csv file and we already have it
-        oFields = ['filename', 'brickname', 'objid', 'ra', 'dec', 'flux_g', 'flux_r',
-                   'flux_z', 'mag_g', 'mag_r', 'mag_z', 'nobs_g', 'nobs_r', 'nobs_z', 'mtype']
+        oFields = [
+            'filename', 'brickname', 'objid', 'ra', 'dec', 'flux_g', 'flux_r',
+            'flux_z', 'mag_g', 'mag_r', 'mag_z', 'nobs_g', 'nobs_r', 'nobs_z',
+            'mtype'
+        ]
         writer = csv.DictWriter(oFile, fieldnames=oFields)
         for o in objects:
-            writer.writerow({'filename': o['filename'], 'brickname': o['brickname'], 'objid': o['objid'], 'ra': o['ra'], 'dec': o['dec'], 'flux_g': o['flux_g'], 'flux_r': o['flux_r'],
-                             'flux_z': o['flux_z'], 'mag_g': o['mag_g'], 'mag_r': o['mag_r'], 'mag_z': o['mag_z'], 'nobs_g': o['nobs_g'], 'nobs_r': o['nobs_r'], 'nobs_z': o['nobs_z'], 'mtype': o['mtype']})
+            writer.writerow({
+                'filename': o['filename'],
+                'brickname': o['brickname'],
+                'objid': o['objid'],
+                'ra': o['ra'],
+                'dec': o['dec'],
+                'flux_g': o['flux_g'],
+                'flux_r': o['flux_r'],
+                'flux_z': o['flux_z'],
+                'mag_g': o['mag_g'],
+                'mag_r': o['mag_r'],
+                'mag_z': o['mag_z'],
+                'nobs_g': o['nobs_g'],
+                'nobs_r': o['nobs_r'],
+                'nobs_z': o['nobs_z'],
+                'mtype': o['mtype']
+            })
 
     if folder_done:
         objects = False
     return objects, next_start_file, next_start_object, next_c
 
 
-def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits', '0', '0', '001')):
+def initiate_download_files(path,
+                            DR,
+                            outstart=('tractor-0010p292.fits', '0', '0',
+                                      '001')):
     '''
     If first run of program (i.e. not resuming), this creates the necessary files and folders for program to work
     '''
@@ -275,24 +335,29 @@ def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits', '0', '0
     outfile = '{}outfile_dr{}'.format(path, DR)
 
     print('initializing empty classifications csv file...')
-    with open(csvfile+'.csv', 'w') as myFile:
-        myFields = ["ID", "is_lens", "Einstein_area",
-                    "numb_pix_lensed_image", "flux_lensed_image_in_sigma"]
+    with open(csvfile + '.csv', 'w') as myFile:
+        myFields = [
+            "ID", "is_lens", "Einstein_area", "numb_pix_lensed_image",
+            "flux_lensed_image_in_sigma"
+        ]
         writer = csv.DictWriter(myFile, fieldnames=myFields)
         writer.writeheader()
     print('done.')
 
     print('initializing empty object info csv file...')
-    with open(objectfile+'.csv', 'w') as oFile:
+    with open(objectfile + '.csv', 'w') as oFile:
         # omitting 'image' bc it's a lot to put in the csv file and we already have it
-        oFields = ['filename', 'brickname', 'objid', 'ra', 'dec', 'flux_g', 'flux_r',
-                   'flux_z', 'mag_g', 'mag_r', 'mag_z', 'nobs_g', 'nobs_r', 'nobs_z', 'mtype']
+        oFields = [
+            'filename', 'brickname', 'objid', 'ra', 'dec', 'flux_g', 'flux_r',
+            'flux_z', 'mag_g', 'mag_r', 'mag_z', 'nobs_g', 'nobs_r', 'nobs_z',
+            'mtype'
+        ]
         writer = csv.DictWriter(oFile, fieldnames=oFields)
         writer.writeheader()
     print('done.')
 
     print('initializing outfile...')
-    with open(outfile+'.txt', 'w') as outFile:
+    with open(outfile + '.txt', 'w') as outFile:
         file, objid, c, t_folder = outstart
         outFile.write('{},{},{},{}'.format(file, objid, c, t_folder))
     print('done.\n')
@@ -300,17 +365,42 @@ def initiate_download_files(path, DR, outstart=('tractor-0010p292.fits', '0', '0
     return
 
 
-def main(path, outfile, csvfile, objectinfo, DR=7, startfile=False, startobject=False, c=0, t_folder='000'):
+def main(path,
+         outfile,
+         csvfile,
+         objectinfo,
+         DR=7,
+         startfile=False,
+         startobject=False,
+         c=0,
+         t_folder='000'):
     t_folder = '010'
     ret_objects, next_start_file, next_start_object, next_c = download_Tractor2(
-        path=path, csvfile=csvfile, objectcsvfile=objectinfo, DR=DR, t_folder=t_folder, n_objects=200, min_passes=3, counter_init=c, startfile=startfile, startobject=startobject)
+        path=path,
+        csvfile=csvfile,
+        objectcsvfile=objectinfo,
+        DR=DR,
+        t_folder=t_folder,
+        n_objects=200,
+        min_passes=3,
+        counter_init=c,
+        startfile=startfile,
+        startobject=startobject)
 
     # check if you need to continue getting files from the next folder
     if ret_objects == False:
-        new_t_folder = '{:03d}'.format(int(t_folder)+1)
+        new_t_folder = '{:03d}'.format(int(t_folder) + 1)
         # call main again, starting with the first object of the first file in the next tractor folder
         ret_objects, next_start_file, next_start_object, next_c = main(
-            path, outfile, csvfile, objectinfo, DR=7, startfile=False, startobject=False, c=next_c, t_folder=new_t_folder)
+            path,
+            outfile,
+            csvfile,
+            objectinfo,
+            DR=7,
+            startfile=False,
+            startobject=False,
+            c=next_c,
+            t_folder=new_t_folder)
 
     print('\ndone.')
     return ret_objects, next_start_file, next_start_object, next_c
@@ -336,13 +426,17 @@ if __name__ == "__main__":
     with open(output_filename, 'r') as output_file:
         outdata = output_file.readlines()
     startfile, startobject, c, t_folder = str(outdata[-1].split(',')[0]), int(
-        outdata[-1].split(',')[1]), int(outdata[-1].split(',')[2]), str(outdata[-1].split(',')[3])
+        outdata[-1].split(',')[1]), int(outdata[-1].split(',')[2]), str(
+            outdata[-1].split(',')[3])
     # run main
     start_time = time.time()
     ret_objects, next_start_file, next_start_object, next_c = main(
-        path, output_filename, csvfile, objectinfo, DR, startfile, startobject, c, t_folder)
+        path, output_filename, csvfile, objectinfo, DR, startfile, startobject,
+        c, t_folder)
     # write new parameters to outfile
-    print('\t- - - completed downloads in {} seconds - - -'.format(time.time() - start_time))
+    print(
+        '\t- - - completed downloads in {} seconds - - -'.format(time.time() -
+                                                                 start_time))
     print('writing parameters for next run to outfile...')
     with open(output_filename, 'a') as output_file:
         output_file.write('\n{},{},{},{}'.format(
