@@ -4,7 +4,8 @@ ANDREW PILON
 
 Use this to get data sets from Legacy Surveys.
 
- - If first run, generates 'cutouts' folder as well as classifications_dr#.csv, objectinfo_dr#.csv, and outfile_dr#.txt within path.
+ # .csv, objectinfo_dr#.csv, and outfile_dr#.txt within path.
+ - If first run, generates 'cutouts' folder as well as classifications_dr
 
 Specifies files from Tractor to download, pulls info on objects, gets fits cutouts from skyviewer using coordinates, writes csv file
 to have the same format as the training classifications.csv, writes Tractor catalog information to objectinfo_dr#.csv. Appends outfile
@@ -85,9 +86,7 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
 
         # go through objects in file
         for i in range(startobject, filedata.shape[0]):
-
             same_file = False
-
             # check if enough objects have already been added to the list
             if len(objects) == n_objects:
                 # this IS the next object to get because it won't be read in this iteration (break)
@@ -102,108 +101,104 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                     '!!! failed to get cutout 15 times - quitting early with recovered objects !!!')
                 break
 
-            # PERFORM DATA CUTS (nobs, mag, type, etc.)
+            filename = 'cutout_{:06d}'.format(counter)
+
+            mag_g = 0
+            mag_r = 0
+            mag_z = 0
+            flux_g = 0
+            flux_r = 0
+            flux_z = 0
+            brickname = None
+            ra = None
+            dec = None
+            objid = None
+            url = None
+            # Extracting information from the huge filedata array.
             if DR == 7:
-                nobs_g = filedata[i][104]  # DR7
+                nobs_g = filedata[i][104]
                 nobs_r = filedata[i][105]
                 nobs_z = filedata[i][107]
                 mtype = filedata[i][6]
+                brickname = filedata[i][2]
+                flux_g = filedata[i][44]
+                flux_r = filedata[i][45]
+                flux_z = filedata[i][47]
+                ra = filedata[i][7]
+                dec = filedata[i][8]
+                objid = filedata[i][3]
+                url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(
+                    ra, dec)
             elif DR == 6:
-                nobs_g = filedata[i][65]  # DR6
+                nobs_g = filedata[i][65]
                 nobs_r = filedata[i][66]
                 nobs_z = filedata[i][68]
-
+                brickname = filedata[i][2]
+                flux_g = filedata[i][17]
+                flux_r = filedata[i][18]
+                flux_z = filedata[i][20]
+                ra = filedata[i][6]
+                dec = filedata[i][7]
+                objid = filedata[i][3]
+                url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=mzls+bass-dr6&pixscale=0.262&bands=grz'.format(
+                    ra, dec)
+            else:
+                continue
             # DATA CUT SECTION
-            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and (mtype == 'COMP' or mtype == 'DEV' or mtype == 'EXP'):
-                # now see if we can get it from the viewer cutout
-                if DR == 7:
-                    ra = filedata[i][7]  # DR7
-                    dec = filedata[i][8]
-                    objid = filedata[i][3]
-                elif DR == 6:
-                    ra = filedata[i][6]  # DR6
-                    dec = filedata[i][7]
-                    objid = filedata[i][3]
-                print('\t [{}] attempting to get cutout for object {} at {} {}'.format(
-                    goodobj, objid, ra, dec))
-                if DR == 7:
-                    # DR5 -> DR7
-                    url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(
-                        ra, dec)
-                elif DR == 6:
-                    # DR6
-                    url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=mzls+bass-dr6&pixscale=0.262&bands=grz'.format(
-                        ra, dec)
+            if flux_g == 0 or flux_r == 0 or flux_z == 0:
+                print('\nFailed non-zero flux check')
+                continue
+            mag_g = fluxToMag(flux_g)
+            mag_r = fluxToMag(flux_r)
+            mag_z = fluxToMag(flux_z)
+            if flux_z < -0.046518 or flux_z > 7.807234:
+                print('\nFailed flux_z check: flux_z=' + str(flux_z))
+                continue
+            if nobs_g < min_passes or nobs_r < min_passes or nobs_z < min_passes:
+                print('\nFailed min_passes check')
+                continue
+            if mtype != 'COMP' or mtype != 'DEV' or mtype != 'EXP':
+                continue
+            print('\t [{}] attempting to get cutout for object {} at {} {}'.format(
+                goodobj, objid, ra, dec))
 
-                failed_attempts = 0
-                failed = False
-                retrieved = False
-                while failed == False and retrieved == False:
-                    # checks how many attempts have been made, moves onto next object if too many
-                    if failed_attempts == 50:
-                        failed = True
-                    try:
-                        filename = wget.download(
-                            url, '{}cutouts/cutout_{:06d}.fits'.format(path, counter))  # DR7
+            failed_attempts = 0
+            failed = False
+            retrieved = False
+            while failed == False and retrieved == False:
+                # checks how many attempts have been made, moves onto next object if too many
+                if failed_attempts == 50:
+                    failed = True
+                try:
+                    filename = wget.download(
+                        url, '{}cutouts/cutout_{:06d}.fits'.format(path, counter))
 
-                        # EXIT IF DOWNLOADING FITS WITH SAME NAME
-                        if '(1)' in filename:
-                            same_file = True
-                            print(filename)
-                            print(
-                                '\nthat file already exist, go figure out what you messed up. saving parameters and exiting program...')
-                            break
+                    # EXIT IF DOWNLOADING FITS WITH SAME NAME
+                    if '(1)' in filename:
+                        same_file = True
+                        print(filename)
+                        print(
+                            '\nthat file already exist, go figure out what you messed up. saving parameters and exiting program...')
+                        return
+                    with fits.open(filename) as fit:
+                        image = fit[0].data
+                    retrieved = True
+                except:
+                    failed_attempts += 1
+                    if failed_attempts % 10 == 0:
+                        print('\t\tfailed attempt {}'.format(failed_attempts))
+                    pass
 
-                        with fits.open(filename) as fit:
-                            image = fit[0].data
-                        retrieved = True
-                    except:
-                        failed_attempts += 1
-                        if failed_attempts % 10 == 0:
-                            print('\t\tfailed attempt {}'.format(failed_attempts))
-                        pass
-
-                if failed:
-                    # don't update object list or counter
-                    total_fails += 1
-                    print(
-                        '\t\tfailed to retrieve cutout for object - moving on to next object...')
-                mag_g = 0
-                mag_r = 0
-                mag_z = 0
-                if retrieved:
-                    # get all remaining values needed for dictionary, update object list and counter
-                    if DR == 7:
-                        filename = 'cutout_{:06d}'.format(counter)
-                        brickname = filedata[i][2]
-                        flux_g = filedata[i][44]  # DR7
-                        if flux_g != 0:
-                            mag_g = fluxToMag(flux_g)
-                        flux_r = filedata[i][45]  # DR7
-                        if flux_r != 0:
-                            mag_r = fluxToMag(flux_r)
-                        flux_z = filedata[i][47]  # DR7
-                        if flux_z != 0:
-                            mag_z = fluxToMag(flux_z)
-                    elif DR == 6:
-                        filename = 'cutout_{:06d}'.format(counter)
-                        brickname = filedata[i][2]
-                        flux_g = filedata[i][17]  # DR6
-                        if flux_g != 0:
-                            mag_g = fluxToMag(flux_g)
-                        flux_r = filedata[i][18]  # DR6
-                        if flux_r != 0:
-                            mag_r = fluxToMag(flux_r)
-                        flux_z = filedata[i][20]  # DR6
-                        if flux_z != 0:
-                            mag_z = fluxToMag(flux_z)
-                    if flux_g == 0 or flux_r == 0 or flux_z == 0 or mag_z < -0.046518 or mag_z > 7.807234:
-                        continue
-                    object_dict = {'image': image, 'brickname': brickname, 'objid': objid, 'filename': filename, 'ra': ra, 'dec': dec, 'flux_g': flux_g, 'flux_r': flux_r,
-                                   'flux_z': flux_z, 'mag_g': mag_g, 'mag_r': mag_r, 'mag_z': mag_z, 'nobs_g': nobs_g, 'nobs_r': nobs_r, 'nobs_z': nobs_z, 'mtype': mtype}
-                    objects.append(object_dict)
-                    counter += 1
-                    goodobj += 1
+            if failed:
+                # don't update object list or counter
+                total_fails += 1
+                print(
+                    '\t\tfailed to retrieve cutout for object - moving on to next object...')
+                continue
+            object_dict = {'image': image, 'brickname': brickname, 'objid': objid, 'filename': filename, 'ra': ra, 'dec': dec, 'flux_g': flux_g, 'flux_r': flux_r, 'flux_z': flux_z, 'mag_g': mag_g, 'mag_r': mag_r, 'mag_z': mag_z, 'nobs_g': nobs_g, 'nobs_r': nobs_r, 'nobs_z': nobs_z, 'mtype': mtype}
+            objects.append(object_dict)
+            counter += 1
+            goodobj += 1
 
         print('\ngot {} good objects from {}'.format(goodobj, f))
 
