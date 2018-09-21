@@ -2,13 +2,7 @@ import os
 import urllib.request
 
 
-def get_jpegs(csvfile,
-              outfile,
-              jpeg_folder,
-              DR,
-              num_jpegs,
-              jpeg_start=0,
-              step=200):
+def get_jpegs(csvfile, jpeg_folder, DR, num_jpegs, jpeg_start=0, step=200):
     # configure the layer parameter for the url
     layer = ''
     if DR == 7:
@@ -36,11 +30,8 @@ def get_jpegs(csvfile,
 def main():
     step = 10000  # number of fits to get jpegs for
     fits_csv_file = 'C:/Data/lbnl/dr7/010/objectinfo_dr7.csv'
-    # this can be ignored
-    jpeg_outfile = 'C:/Data/lbnl/dr7/010/jpeg_outfile.txt'
     jpeg_folder = 'C:/Data/lbnl/dr7/010/jpegs/'
-    jpeg_count = get_jpegs(fits_csv_file, jpeg_outfile, jpeg_folder, 7, step,
-                           0, step)
+    jpeg_count = get_jpegs(fits_csv_file, jpeg_folder, 7, step, 0, step)
     print('got {} images.'.format(jpeg_count))
 
 
