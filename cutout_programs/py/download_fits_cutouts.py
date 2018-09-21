@@ -120,6 +120,7 @@ def download_Tractor2(
                 )
                 break
 
+            #TODO: rename this to be the objid
             filename = "cutout_{:06d}".format(counter)
 
             mag_g = 0
