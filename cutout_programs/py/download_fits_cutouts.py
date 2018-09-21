@@ -111,7 +111,7 @@ def download_Tractor2(path, csvfile, objectcsvfile, DR=7, t_folder='000', n_obje
                 nobs_z = filedata[i][68]
 
             #### DATA CUT SECTION
-            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and mtype=='COMP':
+            if nobs_g >= min_passes and nobs_r >= min_passes and nobs_z >= min_passes and (mtype=='COMP' or mtype=='DEV' or mtype=='EXP'):
                 # now see if we can get it from the viewer cutout
                 if DR == 7:
                     ra = filedata[i][7] #DR7
