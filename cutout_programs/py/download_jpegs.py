@@ -9,19 +9,19 @@ def get_jpegs(csvfile,
               num_jpegs,
               jpeg_start=0,
               step=200):
-    '''
-    *NOTE* I don't use the jpeg outfile anymore because urllib doesn't run into the download limit like wget did with cutouts.
-    Therefore just have the step be however many should be downloaded. Otherwise it runs with a terminal script using the outfile,
-    getting *step* images at a time.
-    '''
-    # specify layer
+    # configure the layer parameter for the url
+    layer = ''
     if DR == 7:
         layer = 'decals-dr7'
     elif DR == 6:
         layer = 'mzls+bass-dr6'
+    else:
+        return 0
     c = jpeg_start
+    # use the fits csv to download the jpeg images
     with open(csvfile) as csvdata:
         objectinfo = [line.split(',') for line in csvdata]
+    # download the files
     count = 0
     for info in objectinfo[c + 1:c + step + 1]:
         print('downloading jpeg for', info[0])
