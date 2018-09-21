@@ -156,14 +156,15 @@ def download_Tractor2(path,
             else:
                 continue
             # DATA CUT SECTION
-            if flux_g == 0 or flux_r == 0 or flux_z == 0:
+            if flux_g <= 0 or flux_r <= 0 or flux_z <= 0:
                 print('\nFailed non-zero flux check')
                 continue
             mag_g = fluxToMag(flux_g)
             mag_r = fluxToMag(flux_r)
             mag_z = fluxToMag(flux_z)
-            if flux_z < -0.046518 or flux_z > 7.807234:
-                print('\nFailed flux_z check: flux_z=' + str(flux_z))
+            if mag_z < 2:
+                # print('\nFailed check: mag_z=' + str(mag_z) + " flux_z=" +
+                #       str(flux_z))
                 continue
             if nobs_g < min_passes or nobs_r < min_passes or nobs_z < min_passes:
                 print('\nFailed min_passes check')
