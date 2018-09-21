@@ -156,21 +156,22 @@ def download_Tractor2(path,
             else:
                 continue
             # DATA CUT SECTION
+            if nobs_g < min_passes or nobs_r < min_passes or nobs_z < min_passes:
+                print('\nFailed min_passes check')
+                continue
+            # if not (mtype == 'COMP' or mtype == 'DEV' or mtype == 'EXP'):
+            #     print('\nFailed mtype check. mtype=' + mtype)
+            #     continue
             if flux_g <= 0 or flux_r <= 0 or flux_z <= 0:
-                print('\nFailed non-zero flux check')
+                print('\nFailed positive flux check')
                 continue
             mag_g = fluxToMag(flux_g)
             mag_r = fluxToMag(flux_r)
             mag_z = fluxToMag(flux_z)
-            if mag_z < 2:
+            # if mag_z < 2:
                 # print('\nFailed check: mag_z=' + str(mag_z) + " flux_z=" +
                 #       str(flux_z))
-                continue
-            if nobs_g < min_passes or nobs_r < min_passes or nobs_z < min_passes:
-                print('\nFailed min_passes check')
-                continue
-            if mtype != 'COMP' or mtype != 'DEV' or mtype != 'EXP':
-                continue
+                # continue
             print('\t [{}] attempting to get cutout for object {} at {} {}'.
                   format(goodobj, objid, ra, dec))
 
