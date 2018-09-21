@@ -446,7 +446,7 @@ def main(
 if __name__ == "__main__":
     # REQUIRED PARAMETERS
     DR = 7
-    path = "C:/Data/lbnl/dr7/011/"  # <-- this needs to end in '/'
+    path = "D:/Data/lbnl/dr7/011/"  # <-- this needs to end in '/'
 
     # check if first run
     if not os.path.isdir("{}cutouts".format(path)):
