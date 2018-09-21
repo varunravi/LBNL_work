@@ -27,6 +27,7 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 import re
 import csv
+import wget
 import urllib.request
 import argparse
 import sys
@@ -313,7 +314,7 @@ def download_Tractor2(
 
     # write csv file to contain information from object dictionaries
     print("appending files to object info csv file...")
-    with open(objectcsvfile + ".csv", "a") as oFile:
+    with open(objectcsvfile + ".csv", "ab") as oFile:
         # omitting 'image' bc it's a lot to put in the csv file and we already have it
         oFields = [
             "filename",
