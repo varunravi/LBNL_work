@@ -5,39 +5,43 @@ import layers_normal as nn
 
 
 def dihedral(x, i):
-    if len(x.shape) == 3: # AJPILON this is used for 4 band? not sure what len=4 refers to because even the 4 band images are (101,101,4) which is 3-dim
+    if len(x.shape) == 3:  # AJPILON this is used for 4 band? not sure what len=4 refers to because even the 4 band images are (101,101,4) which is 3-dim
         if i & 4:
             y = np.transpose(x, (1, 0, 2))
         else:
             y = x.copy()
 
-        if i&3 == 0:
+        if i & 3 == 0:
             return y
-        if i&3 == 1:
+        if i & 3 == 1:
             return y[:, ::-1]
-        if i&3 == 2:
+        if i & 3 == 2:
             return y[::-1, :]
-        if i&3 == 3:
+        if i & 3 == 3:
             return y[::-1, ::-1]
 
-    if len(x.shape) == 4: #AJPILON idk when this is used now. list of arrays? who knows
+    if len(x.shape) == 4:  # AJPILON idk when this is used now. list of arrays? who knows
         if i & 4:
             y = np.transpose(x, (0, 2, 1, 3))
         else:
             y = x.copy()
 
-        if i&3 == 0:
+        if i & 3 == 0:
             return y
-        if i&3 == 1:
+        if i & 3 == 1:
             return y[:, :, ::-1]
-        if i&3 == 2:
+        if i & 3 == 2:
             return y[:, ::-1, :]
-        if i&3 == 3:
+        if i & 3 == 3:
             return y[:, ::-1, ::-1]
 
+
 def summary_images(x, name):
-    for i in range(min(4, x.get_shape().as_list()[3])): # AJPILON this checks if image is 1 or 4 bands, then gets a summary(?) of each band
-        tf.summary.image("{}-{}".format(name, i), x[:, :, :, i:i+1]) # AJPILON should still work on 3 bands though. shape would be less than 4?
+    # AJPILON this checks if image is 1 or 4 bands, then gets a summary(?) of each band
+    for i in range(min(4, x.get_shape().as_list()[3])):
+        # AJPILON should still work on 3 bands though. shape would be less than 4?
+        tf.summary.image("{}-{}".format(name, i), x[:, :, :, i:i+1])
+
 
 class CNN:
     # pylint: disable=too-many-instance-attributes
@@ -54,28 +58,27 @@ class CNN:
         self.test = None
         self.embedding_input = None
 
-
     def NN(self, x):
         assert x.get_shape().as_list()[:3] == [None, 101, 101]
         summary_images(x, "layer0")
-        x = nn.convolution(x, 16, w=4) # 98
-        x = nn.convolution(x) # 96
+        x = nn.convolution(x, 16, w=4)  # 98
+        x = nn.convolution(x)  # 96
         summary_images(x, "layer2")
         x = nn.max_pool(x)
         x = nn.batch_normalization(x, self.tfacc)
 
         ########################################################################
         assert x.get_shape().as_list() == [None, 48, 48, 16]
-        x = nn.convolution(x, 32) # 46
-        x = nn.convolution(x) # 44
+        x = nn.convolution(x, 32)  # 46
+        x = nn.convolution(x)  # 44
         summary_images(x, "layer4")
         x = nn.max_pool(x)
         x = nn.batch_normalization(x, self.tfacc)
 
         ########################################################################
         assert x.get_shape().as_list() == [None, 22, 22, 32]
-        x = nn.convolution(x, 64) # 20
-        x = nn.convolution(x) # 18
+        x = nn.convolution(x, 64)  # 20
+        x = nn.convolution(x)  # 18
         summary_images(x, "layer6")
         x = nn.max_pool(x)
         x = nn.batch_normalization(x, self.tfacc)
@@ -83,11 +86,11 @@ class CNN:
 
         ########################################################################
         assert x.get_shape().as_list() == [None, 9, 9, 64]
-        x = nn.convolution(x, 128) # 7
+        x = nn.convolution(x, 128)  # 7
         summary_images(x, "layer7")
         x = tf.nn.dropout(x, self.tfkp)
 
-        x = nn.convolution(x) # 5
+        x = nn.convolution(x)  # 5
         x = nn.batch_normalization(x, self.tfacc)
         x = tf.nn.dropout(x, self.tfkp)
 
@@ -114,9 +117,12 @@ class CNN:
 
     ########################################################################
     def create_architecture(self, bands):
-        self.tfkp = tf.placeholder_with_default(tf.constant(1.0, tf.float32), [], name="kp")
-        self.tfacc = tf.placeholder_with_default(tf.constant(0.0, tf.float32), [], name="acc")
-        x = self.tfx = tf.placeholder(tf.float32, [None, 101, 101, bands], name="input")
+        self.tfkp = tf.placeholder_with_default(
+            tf.constant(1.0, tf.float32), [], name="kp")
+        self.tfacc = tf.placeholder_with_default(
+            tf.constant(0.0, tf.float32), [], name="acc")
+        x = self.tfx = tf.placeholder(
+            tf.float32, [None, 101, 101, bands], name="input")
         # mean = 0 and std = 1
 
         with tf.name_scope("nn"):
@@ -128,19 +134,21 @@ class CNN:
 
         with tf.name_scope("xent"):
             self.tfy = tf.placeholder(tf.float32, [None])
-            xent = tf.nn.sigmoid_cross_entropy_with_logits(logits=x, labels=tf.reshape(self.tfy, [-1, 1]))
+            xent = tf.nn.sigmoid_cross_entropy_with_logits(
+                logits=x, labels=tf.reshape(self.tfy, [-1, 1]))
             # [None, 1]
             self.xent = tf.reduce_mean(xent)
 
         with tf.name_scope("train"):
-            self.tftrain_step = tf.train.AdamOptimizer(1e-4).minimize(self.xent)
+            self.tftrain_step = tf.train.AdamOptimizer(
+                1e-4).minimize(self.xent)
 
     @staticmethod
     def split_test_train(path, n_data):
         # extract the files names and split them into test and train set
         import os
         files = ['{}/{}'.format(path, f) for f in sorted(os.listdir(path))]
-        n_test = int(n_data*0.3) # added by AJP
+        n_test = int(n_data*0.3)  # added by AJP
         # return files[:3000], files[3000:] # commented out by AJP
         return files[:n_test], files[n_test:]
 
@@ -189,8 +197,9 @@ class CNN:
         kp = 0.5 + 0.5 * 0.5 ** (self.train_counter / 2000.0)
 
         output = session.run([self.tftrain_step, self.xent] + tensors,
-            feed_dict={self.tfx: xs, self.tfy: ys, self.tfkp: kp, self.tfacc: acc},
-            options=options, run_metadata=run_metadata)
+                             feed_dict={self.tfx: xs, self.tfy: ys,
+                                        self.tfkp: kp, self.tfacc: acc},
+                             options=options, run_metadata=run_metadata)
 
         self.train_counter += 1
         return output[1], output[2:]
