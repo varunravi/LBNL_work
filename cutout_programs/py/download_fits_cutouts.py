@@ -375,7 +375,7 @@ def main(path,
          startobject=False,
          c=0,
          t_folder='000'):
-    t_folder = '010'
+    t_folder = '011'
     ret_objects, next_start_file, next_start_object, next_c = download_Tractor2(
         path=path,
         csvfile=csvfile,
@@ -408,11 +408,9 @@ def main(path,
 
 
 if __name__ == "__main__":
-
     # REQUIRED PARAMETERS
-    # -- NOTE: MUST RUN "INITIATE_CSV_FILES.PY" BEFORE FIRST TIME RUNNING THIS
     DR = 7
-    path = 'C:/Data/lbnl/dr7/010/'  # <-- this needs to end in '/'
+    path = 'C:/Data/lbnl/dr7/011/'  # <-- this needs to end in '/'
 
     # check if first run
     if not os.path.isdir('{}cutouts'.format(path)):
