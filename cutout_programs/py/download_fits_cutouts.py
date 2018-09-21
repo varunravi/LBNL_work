@@ -120,9 +120,6 @@ def download_Tractor2(
                 )
                 break
 
-            #TODO: rename this to be the objid
-            filename = "cutout_{:06d}".format(counter)
-
             mag_g = 0
             mag_r = 0
             mag_z = 0
@@ -197,13 +194,13 @@ def download_Tractor2(
                 if failed_attempts == 50:
                     failed = True
                 try:
+                    #TODO: rename this to be the objid
                     filename = wget.download(
                         url, "{}cutouts/cutout_{:06d}.fits".format(path, counter)
                     )
 
                     # EXIT IF DOWNLOADING FITS WITH SAME NAME
-                    if "(1)" in filename:
-                        same_file = True
+                    if "(1)" == filename[-3:]:
                         print(filename)
                         print(
                             "\nthat file already exist, go figure out what you messed up. saving parameters and exiting program..."
