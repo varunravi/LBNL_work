@@ -140,6 +140,9 @@ def download_Tractor2(path,
                 objid = filedata[i][3]
                 url = 'http://legacysurvey.org/viewer/fits-cutout?ra={}&dec={}&size=101&layer=decals-dr7&pixscale=0.262&bands=grz'.format(
                     ra, dec)
+                print(filedata[i])
+                print(len(filedata[i]))
+                return
             elif DR == 6:
                 nobs_g = filedata[i][65]
                 nobs_r = filedata[i][66]
