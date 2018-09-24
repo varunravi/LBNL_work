@@ -365,7 +365,7 @@ def initiate_download_files(
     print("done.")
 
     print("initializing empty object info csv file...")
-    with open(objectfile + ".csv", "w") as oFile:
+    with open(objectfile + ".csv", "w", newline="") as oFile:
         # omitting 'image' bc it's a lot to put in the csv file and we already have it
         oFields = [
             "filename",
