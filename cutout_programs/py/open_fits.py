@@ -28,6 +28,5 @@ l7 = len(dr7_fits_vals)
 
 for i in range(min(l6, l7)):
     if not all (checkDif(dr6_fits_vals[i], dr7_fits_vals[i], key) for key in check_keys):
-        print("...")
-        print("{}\n{}\n{}".format(i, dr6_fits_vals[i], dr7_fits_vals[i]))
+        print("\n{}\n{}\n{}".format(i, dr6_fits_vals[i], dr7_fits_vals[i]))
         break
