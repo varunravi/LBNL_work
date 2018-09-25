@@ -34,7 +34,7 @@ def match_two_fits_files(fits_file1, fits_file2, matching_keys):
     fits2_vals = extract_from_fits_file(fits_file2, FITS_CATALOG_KEYS)
 
     for i in range(min(len(fits1_vals), len(fits2_vals))):
-        if not all(check_dict_key(fits1_vals[i], fits2_vals[i], key) for key in check_keys):
+        if not all(check_dict_key(fits1_vals[i], fits2_vals[i], key) for key in matching_keys):
             print("Check failed.\n{{i:{},\nfits1[i]:{},\nfits2[i]:{}}}".format(i, fits1_vals[i], fits2_vals[i]))
             break
         print("checked " + str(i))
