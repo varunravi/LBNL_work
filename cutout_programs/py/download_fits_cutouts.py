@@ -352,7 +352,7 @@ def initiate_download_files(
     outfile = "{}outfile_dr{}".format(path, DR)
 
     print("initializing empty classifications csv file...")
-    with open(csvfile + ".csv", "w") as myFile:
+    with open(csvfile + ".csv", "w", newline="") as myFile:
         myFields = [
             "ID",
             "is_lens",
@@ -389,7 +389,7 @@ def initiate_download_files(
     print("done.")
 
     print("initializing outfile...")
-    with open(outfile + ".txt", "w") as outFile:
+    with open(outfile + ".txt", "w", newline="") as outFile:
         file, objid, c, t_folder = outstart
         outFile.write("{},{},{},{}".format(file, objid, c, t_folder))
     print("done.\n")
