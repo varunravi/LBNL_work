@@ -15,32 +15,34 @@ fits_catalog_keys = {
     "nobs_z",
 }
 
-dr7_fits = "D:/Data/lbnl/tractor-0001m002_dr7.fits"
-dr7_fits_vals = []
-with fits.open(dr7_fits) as hdul:
-    data = hdul[1].data
-    dr7_fits_vals = [{key: datum[key] for key in fits_catalog_keys} for datum in data]
-
-dr6_fits = "D:/Data/lbnl/tractor-0001m002_dr6.fits"
-dr6_fits_vals = []
-with fits.open(dr6_fits) as hdul:
-    data = hdul[1].data
-    dr6_fits_vals = [{key: datum[key] for key in fits_catalog_keys} for datum in data]
+def extract_from_fits_file(fits_file, keys={}):
+    with fits.open(fits_file) as hdul:
+        data = hdul[1].data
+        if not keys:
+            keys = hdul[1].columns.names
+        return [{key: datum[key] for key in fits_catalog_keys} for datum in data]
 
 
-def checkDif(dict1, dict2, key):
+def check_dict_key(dict1, dict2, key):
     if dict1[key] == dict2[key]:
         return True
     print(str(key) + " diff")
     return False
 
+def match_two_fits_files(fits_file1, fits_file2, matching_keys):
+    fits1_vals = extract_from_fits_file(fits_file1, fits_catalog_keys)
+    fits2_vals = extract_from_fits_file(fits_file2, fits_catalog_keys)
 
-check_keys = ["brickname", "objid", "ra", "dec"]
+    for i in range(min(len(fits1_vals), len(fits2_vals))):
+        if not all(check_dict_key(fits1_vals[i], fits2_vals[i], key) for key in check_keys):
+            print("Check failed.\n{{i:{},\nfits1[i]:{},\nfits2[i]:{}}}".format(i, fits1_vals[i], fits2_vals[i]))
+            break
+        print("checked " + str(i))
 
-l6 = len(dr6_fits_vals)
-l7 = len(dr7_fits_vals)
+if __name__ == "__main__":
+    dr6_fits = "D:/Data/lbnl/dr6/tractor-0001m002.fits"
+    dr7_fits = "D:/Data/lbnl/dr7/tractor-0001m002.fits"
 
-for i in range(min(l6, l7)):
-    if not all(checkDif(dr6_fits_vals[i], dr7_fits_vals[i], key) for key in check_keys):
-        print("\n{}\n{}\n{}".format(i, dr6_fits_vals[i], dr7_fits_vals[i]))
-        break
+    check_keys = ["brickname", "objid", "ra", "dec"]
+    match_two_fits_files(dr6_fits, dr7_fits, check_keys)
+
