@@ -39,10 +39,27 @@ def match_two_fits_files(fits_file1, fits_file2, matching_keys):
             break
         print("checked " + str(i))
 
+def exclusivity_of_two_files(fits_file1, fits_file2, matching_keys):
+    fits1_vals = extract_from_fits_file(fits_file1, FITS_CATALOG_KEYS)
+    fits2_vals = extract_from_fits_file(fits_file2, FITS_CATALOG_KEYS)
+
+    in_count = sum((True if val in fits2_vals else False for val in fits1_vals))
+
+    # for val in fits1_vals:
+    #     if val in fits2_vals:
+    #         in_count += 1
+    #     else:
+    #         out_count += 1
+    print("in :" + str(in_count))
+    print("out:" + str(len(fits1_vals) - in_count))
+
 if __name__ == "__main__":
     dr6_fits = "D:/Data/lbnl/dr6/tractor-0001m002.fits"
     dr7_fits = "D:/Data/lbnl/dr7/tractor-0001m002.fits"
 
-    check_keys = ["brickname", "objid", "ra", "dec"]
-    match_two_fits_files(dr6_fits, dr7_fits, check_keys)
+    # check_keys = ["brickname", "objid", "ra", "dec"]
+    # match_two_fits_files(dr6_fits, dr7_fits, check_keys)
+
+    check_keys = ["ra", "dec"]
+    exclusivity_of_two_files(dr6_fits, dr7_fits, check_keys)
 
